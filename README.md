@@ -123,6 +123,18 @@ POST to the controller action. Be careful not to disable it for more
 actions than you need. Be sure to disable any authentication checks for
 that action, too.
 
+### :pass_thru
+
+`:pass_thru` affects whether further middleware (or your application) see the
+message as parameters. When this is `false` (the default), the message is only
+available as the value of `env['sns.message']`.
+
+If `true`, the body is left alone; if you already have a parser for your SNS
+messages but want this Gem's security (and autoconfirmation) features, setting
+the value to true can be handy.
+
+However, the application should still process `env['sns.error']` if present.
+
 ## Multiple endpoint URLs
 
 If you are receiving multiple notifications at multiple endpoint URLs,
