@@ -41,6 +41,15 @@ module Heroic
   - If nil, there is no special handling and the message is passed along to your
     app.
 
+  +:pass_thru+ determines if the body of the request will be changed.
+  - If false (the default), the message contents will only be available in
+    +env['sns.message']+ and removed from further processing by Rack.
+  - If true, in addition to setting the +env['sns.message']+, the original posted
+    contents will remain in the Rack request. This can be useful for adding
+    this Gem into a legacy SNS application quickly.
+  - Your application should still look for a value in +env['sns.error']+ for any
+    other issues.
+
   You can install this in your config.ru:
     use Heroic::SNS::Endpoint, :topics => /whatever/
 
@@ -58,6 +67,7 @@ module Heroic
         options = DEFAULT_OPTIONS.merge(opt)
         @auto_confirm = options[:auto_confirm]
         @auto_resubscribe = options[:auto_resubscribe]
+        @pass_thru = options[:pass_thru]
         if 1 < [:topic, :topics].count { |k| options.has_key?(k) }
           raise ArgumentError.new("supply zero or one of :topic, :topics")
         end
@@ -110,7 +120,7 @@ module Heroic
       def call_on_topic(env)
         begin
           message = Message.new(env['rack.input'].read)
-          env['rack.input'].rewind
+          env['rack.input'].rewind if @pass_thru
           check_headers!(message, env)
           message.verify!
           case message.type
